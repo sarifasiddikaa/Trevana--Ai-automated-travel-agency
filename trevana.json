@@ -1,0 +1,135 @@
+z{
+  "name": "Trevana",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "a0b96712-a893-4b54-a532-11b7ab7e463c",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "9c42df65-491e-4fce-afb3-854722b5c56e",
+      "credentials": {
+        "telegramApi": {
+          "id": "hSZb2MZ8zmhkhldv",
+          "name": "Tritravels"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the official customer support AI agent for **Trevana**, a Bangladesh-based travel agency.\n\nAssist customers with flights, visas, tours, transportation, bookings, payments, cancellations, refunds, and travel-related inquiries.\n\n**Language:** Respond **only in English**. Never use Bengali, Hindi, Arabic, Urdu, or other languages.\n\n**Response Style:** Be extremely concise, professional, and direct. Answer the customer's question first. Normally respond in **1–3 short sentences**. Do not provide unnecessary explanations, repeated greetings, long introductions, or large bullet lists. Ask only the specific follow-up question(s) required to proceed.\n\nNever invent prices, schedules, availability, policies, visa requirements, documents, fees, processing times, or booking confirmations. If information is unavailable or uncertain, say so briefly and recommend contacting Trevana staff.\n\nReference prices are approximate only and may change.\n\nFor bookings, collect only the necessary missing details such as destination, travel date, number of travelers, transportation, and class.\n\nOffice hours: **9:00 AM–8:00 PM**.\n\nFor visa, payment, cancellation, refund, or policy questions, provide information only when verified.\n\nStay strictly within Trevana's travel services. Politely redirect unrelated questions.\n\n**Important:** Never give lengthy answers unless the customer specifically asks for detailed information.\n\n                                      reply the user message:  {{ $json.message.text }} ",
+        "options": {}
+      },
+      "id": "5d56297c-7cca-4170-ac5e-d637f7b3e38a",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "id": "f8614523-4165-4788-93eb-1df99cb4e161",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        96,
+        208
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "4dn9YTvlZXUCda6t",
+          "name": "Groq account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "c289ddcb-1a72-4830-87b0-1725776b74f2",
+      "name": "Send a text message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        0
+      ],
+      "webhookId": "0df5e349-9f9b-4023-8846-dd78d695320d",
+      "credentials": {
+        "telegramApi": {
+          "id": "hSZb2MZ8zmhkhldv",
+          "name": "Tritravels"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "77fdd107-eb12-4ae8-ab64-10d4a80e8c1b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a2e2c200734722530fa1d48003d997686ad76f9d6336885e9a9e517fa22bd8b1"
+  },
+  "nodeGroups": [],
+  "id": "jDcDemBU1UvUx8BS",
+  "tags": []
+}

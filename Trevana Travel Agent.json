@@ -1,0 +1,195 @@
+{
+  "name": "Trevana Travel Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "0b0b3248-c738-43b2-ba5e-e5c4be273a5e",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        112
+      ],
+      "webhookId": "2e46fa6f-72fe-4430-aaa6-50e5d92ed571",
+      "credentials": {
+        "telegramApi": {
+          "id": "xCpmqIbLAXWnjZlE",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "You are Trevana's AI Travel Assistant, for a Bangladesh-based travel agency.\n\nHelp customers plan trips, and answer questions about flights, visas, tours, transportation, bookings, payments, cancellations, refunds, and travel-related inquiries.\n\nYou have access to the \"Travel MCP Tools\" connection, which exposes: Get Weather, Get Currency Exchange Rate, Search Hotels, Search Restaurants, Search Tourist Attractions, and Search Transportation. Use these tools whenever the query involves real-time or destination-specific information. Never guess this information from memory - call the appropriate tool.\n\nPersonalization: remember the user's stated preferences (budget level, hotel type, transportation mode, dietary needs, preferred activities) from earlier in the conversation and automatically apply them to future recommendations without asking again, unless the user changes them.\n\nLanguage: respond only in English.\n\nResponse style: be concise, professional, and direct. Use short paragraphs or bullet points for itineraries. Ask only the specific follow-up question(s) required to proceed. Never invent prices, availability, or policies you have not retrieved - if a tool has no answer, say so briefly.\n\nStay strictly within Trevana's travel services. Politely redirect unrelated questions."
+        }
+      },
+      "id": "cb7e2683-ccff-4653-a91a-3dc7e3c63a30",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        288,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "id": "5ffad1aa-8cbe-4a47-8b2b-738832d1ad71",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        192,
+        336
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "groqApi": {
+          "id": "vLURFWMlGb7xiz4o",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "contextWindowLength": 4
+      },
+      "id": "a91dd677-6375-42da-8ba5-3b4857f9ea74",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        336,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://hiiamtrina.app.n8n.cloud/mcp/travel-mcp",
+        "options": {}
+      },
+      "id": "67f0bfa8-2751-4254-b215-917f80637869",
+      "name": "Travel MCP Tools",
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.4,
+      "position": [
+        480,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "021d7610-ca55-4af9-9711-9d8099dc574f",
+      "name": "Send a text message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        688,
+        112
+      ],
+      "webhookId": "143ec8ab-8051-4762-bedd-7121a91d9d44",
+      "credentials": {
+        "telegramApi": {
+          "id": "xCpmqIbLAXWnjZlE",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Travel MCP Tools": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "6fd83623-05b1-486b-bd18-1d00cceca4aa",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "35d60cd5b22eeceb9e98f520adbf077b7a2b61cad113fd464390c72092badc2b"
+  },
+  "nodeGroups": [],
+  "id": "s8sGyLmQJANFviZk",
+  "tags": []
+}

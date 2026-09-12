@@ -1,0 +1,282 @@
+{
+  "name": "Travel MCP Server",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "travel-mcp",
+        "instructions": "You are a travel data server. Use the location and dates the caller provides to fetch live weather, currency, hotel, restaurant, attraction, and transportation information. Always pass clear, specific search queries."
+      },
+      "id": "fa3ac0be-435e-4bf4-94c8-9c81eabe415e",
+      "name": "Travel MCP Server Trigger",
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 2.1,
+      "position": [
+        256,
+        112
+      ],
+      "webhookId": "d3005e28-864e-4cb2-a427-807e2162ca2d"
+    },
+    {
+      "parameters": {
+        "url": "={{ $fromAI('weatherUrl', 'Full wttr.in URL for the destination city in JSON format. Pattern: https://wttr.in/CityName?format=j1 (replace spaces in the city name with + or _). Example: https://wttr.in/Coxs_Bazar?format=j1', 'string') }}",
+        "options": {}
+      },
+      "id": "c300dcb3-226e-4db9-8f69-6f76c660d3a1",
+      "name": "Get Weather",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        -144,
+        336
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $fromAI('exchangeUrl', 'Full URL: https://open.er-api.com/v6/latest/BASE_CURRENCY_CODE, e.g. https://open.er-api.com/v6/latest/USD to get USD rates against all 160+ currencies including BDT. Use the source currency as the base code in the URL.', 'string') }}",
+        "options": {}
+      },
+      "id": "a8281ccb-d520-435a-b594-1b3c07ecf868",
+      "name": "Get Currency Exchange Rate",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        48,
+        336
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://overpass-api.de/api/interpreter",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ '[out:json][timeout:25];node[\"tourism\"~\"hotel|guest_house|hostel|motel\"](around:5000,' + $fromAI('lat', 'Latitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + ',' + $fromAI('lon', 'Longitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + ');out body 15;' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7709311c-4b79-4ac8-be32-6e2bc282789f",
+      "name": "Search Hotels",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        352
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://overpass-api.de/api/interpreter",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ '[out:json][timeout:25];node[\"amenity\"~\"restaurant|cafe|fast_food\"](around:3000,' + $fromAI('lat', 'Latitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + ',' + $fromAI('lon', 'Longitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + ');out body 15;' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b18592d1-d45c-4019-818a-55da4073a0c7",
+      "name": "Search Restaurants",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        384,
+        352
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://overpass-api.de/api/interpreter",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ '[out:json][timeout:25];node[\"tourism\"~\"attraction|museum|viewpoint|zoo|artwork\"](around:10000,' + $fromAI('lat', 'Latitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + ',' + $fromAI('lon', 'Longitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + ');out body 20;' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6fa6ffcb-6dae-42e9-8adc-fa97bf6c3151",
+      "name": "Search Tourist Attractions",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        528,
+        352
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://overpass-api.de/api/interpreter",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ '[out:json][timeout:25];(node[\"amenity\"~\"bus_station|ferry_terminal\"](around:10000,' + $fromAI('lat', 'Latitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + ',' + $fromAI('lon', 'Longitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + ');node[\"railway\"=\"station\"](around:10000,' + $fromAI('lat', 'Latitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + ',' + $fromAI('lon', 'Longitude of the destination in decimal degrees, obtained from the Geocode Location tool result', 'string') + '););out body 15;' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3ab5b931-f713-4bfd-a401-887dc8e391e7",
+      "name": "Search Transportation",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        352
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://nominatim.openstreetmap.org/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $fromAI('location', 'Place name to geocode, e.g. Sajek Valley, Bangladesh', 'string') }}"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "TrevanaTravelAssistant/1.0 (contact: support@trevana.example)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7d0ed1c2-0d15-4120-ade4-622af970dfdb",
+      "name": "Geocode Location",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.5,
+      "position": [
+        -320,
+        336
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Weather": {
+      "ai_tool": [
+        [
+          {
+            "node": "Travel MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Currency Exchange Rate": {
+      "ai_tool": [
+        [
+          {
+            "node": "Travel MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Hotels": {
+      "ai_tool": [
+        [
+          {
+            "node": "Travel MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Restaurants": {
+      "ai_tool": [
+        [
+          {
+            "node": "Travel MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Tourist Attractions": {
+      "ai_tool": [
+        [
+          {
+            "node": "Travel MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Transportation": {
+      "ai_tool": [
+        [
+          {
+            "node": "Travel MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Geocode Location": {
+      "ai_tool": [
+        [
+          {
+            "node": "Travel MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "85122db4-a3a7-47f0-881d-3ac25d570141",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "35d60cd5b22eeceb9e98f520adbf077b7a2b61cad113fd464390c72092badc2b"
+  },
+  "nodeGroups": [],
+  "id": "vD07UZEMHbdORHfL",
+  "tags": []
+}
